@@ -10,7 +10,7 @@ from typing import Any
 from mcp.server import MCPServer, ServerRequestContext
 from mcp.server.context import CallNext, HandlerResult
 
-from . import tools
+from . import estado, tools
 
 log = logging.getLogger("central_salas")
 
@@ -24,7 +24,7 @@ async def registrar_request(ctx: ServerRequestContext[Any, Any], call_next: Call
 
 
 def criar_servidor() -> MCPServer:
-    mcp = MCPServer("central-de-salas", version="1.0.0", middleware=[registrar_request])
+    mcp = MCPServer("central-de-salas", version="1.0.0", request_state_security=estado.seguranca_do_request_state(), middleware=[registrar_request])
     tools.registrar(mcp)
     return mcp
 
