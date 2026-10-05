@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
 from . import dominio
 
@@ -53,11 +54,20 @@ def registrar(mcp: MCPServer) -> None:
     @mcp.tool()
     def consultar_disponibilidade(sala: str, inicio: str, fim: str) -> Disponibilidade:
         """Diz se uma sala esta livre no intervalo, e quais reservas conflitam."""
-        raise NotImplementedError("fase 2")
+        try:
+            _, intervalo = dominio.validar(sala, inicio, fim)
+        except dominio.ErroDeRegra as e:
+            raise ToolError(str(e)) from None
+        ocupado = dominio.conflitos(sala, intervalo)
+        return Disponibilidade(sala=sala, livre=not ocupado, conflitos=[ConflitoOut(**{k: r[k] for k in ConflitoOut.model_fields}) for r in ocupado])
 
     @mcp.tool()
     def reservar_sala(sala: str, inicio: str, fim: str, responsavel: str) -> ReservaOut:
         """Reserva uma sala. Se o intervalo estiver ocupado, pergunta qual alternativa usar."""
+        try:
+            dominio.validar(sala, inicio, fim)
+        except dominio.ErroDeRegra as e:
+            raise ToolError(str(e)) from None
         raise NotImplementedError("fase 3")
 
     @mcp.resource("politica://uso", mime_type="text/markdown")
